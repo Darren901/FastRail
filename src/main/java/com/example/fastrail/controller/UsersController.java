@@ -1,4 +1,4 @@
-package com.example.fastrail;
+package com.example.fastrail.controller;
 
 import com.example.fastrail.dto.UsersDTO;
 import com.example.fastrail.model.Users;
@@ -9,14 +9,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/user")
-public class Controller {
+@RequestMapping("/api/users")
+public class UsersController {
 
     @Autowired
     private UsersService usersService;
 
     @GetMapping
-    public String testController(){
+    public String method(){
         return "Hi User!!";
     }
 
