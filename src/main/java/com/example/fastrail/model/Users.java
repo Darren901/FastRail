@@ -1,18 +1,12 @@
 package com.example.fastrail.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
-//@Getter
-//@Setter
-//@NoArgsConstructor
 public class Users {
 
     @Id
@@ -40,6 +34,10 @@ public class Users {
 
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
+
+    public Users(){
+
+    }
 
     public Integer getId() {
         return id;
