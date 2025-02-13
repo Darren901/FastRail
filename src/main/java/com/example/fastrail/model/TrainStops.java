@@ -1,5 +1,7 @@
 package com.example.fastrail.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.time.LocalTime;
@@ -14,10 +16,12 @@ public class TrainStops {
 
     @ManyToOne
     @JoinColumn(name = "trains_id")
+    @JsonIgnore
     private Trains train;
 
     @ManyToOne
     @JoinColumn(name = "station_id")
+    @JsonIgnore
     private Stations station;
 
     @Column(name = "arrival_time")
@@ -28,6 +32,21 @@ public class TrainStops {
 
     @Column(name = "stop_sequence", nullable = false)
     private Integer stopSequence;
+
+    @JsonProperty("trainNumber")
+    public String fetchTrainNumber(){
+        return train.getTrainNumber();
+    }
+
+    @JsonProperty("stationName")
+    public String fetchStationName(){
+        return station.getStationName();
+    }
+
+    @JsonProperty("stationId")
+    public Integer fetchStationId(){
+        return station.getId();
+    }
 
     public TrainStops(){}
 

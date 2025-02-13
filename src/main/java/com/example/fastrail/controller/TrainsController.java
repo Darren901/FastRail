@@ -24,6 +24,12 @@ public class TrainsController {
         return ResponseEntity.ok(page);
     }
 
+    @GetMapping("/{trainNumber}")
+    public ResponseEntity<?> findByTrainNumber(@PathVariable String trainNumber){
+        Trains train = trainsService.findByTrainNumber(trainNumber);
+        return ResponseEntity.ok(train);
+    }
+
     @PostMapping("/batch")
     public ResponseEntity<?> createTrainsBatch(@RequestBody TrainsListDTO trainsListDTO) {
         List<Trains> savedTrains = trainsService.createTrainsBatch(trainsListDTO.getTrainsList());

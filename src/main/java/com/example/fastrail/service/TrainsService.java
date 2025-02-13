@@ -31,6 +31,11 @@ public class TrainsService {
         return trainsRepo.findAll(pgr);
     }
 
+    public Trains findByTrainNumber(String trainNumber){
+        return trainsRepo.findByTrainNumber(trainNumber)
+                .orElseThrow(() -> new RuntimeException("找不到車次資料"));
+    }
+
     public Trains getTrainById(Integer id){
         return trainsRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("找不到車次"));
