@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/users")
 public class UsersController {
@@ -28,7 +30,7 @@ public class UsersController {
 
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody UsersDTO usersDTO){
-        String token = usersService.checkLogin(usersDTO);
-        return ResponseEntity.status(HttpStatus.OK).body(token);
+        Map<String, Object> map = usersService.checkLogin(usersDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(map);
     }
 }

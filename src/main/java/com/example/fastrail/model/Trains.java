@@ -27,9 +27,11 @@ public class Trains {
     private Stations arrivalStation;
 
     @Column(name = "departure_time", nullable = false)
+    @Temporal(TemporalType.TIME)
     private LocalTime departureTime;
 
     @Column(name = "arrival_time", nullable = false)
+    @Temporal(TemporalType.TIME)
     private LocalTime arrivalTime;
 
     @Column(name = "available_seats", nullable = false)
@@ -39,6 +41,7 @@ public class Trains {
     private Integer ticketPrice;
 
     @Column(name = "train_date", nullable = false)
+    @Temporal(TemporalType.DATE)
     private LocalDate trainDate;
 
     @OneToMany(mappedBy = "train", cascade = CascadeType.ALL)

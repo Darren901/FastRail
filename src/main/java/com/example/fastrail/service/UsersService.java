@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 public class UsersService {
 
@@ -39,7 +42,7 @@ public class UsersService {
         return usersRepo.save(user);
     }
 
-    public String checkLogin(UsersDTO usersDTO){
+    public Map<String, Object> checkLogin(UsersDTO usersDTO){
         Users user = usersRepo.findByEmail(usersDTO.getEmail())
                 .orElseThrow(() -> new RuntimeException("找不到此帳號"));
 
@@ -48,7 +51,10 @@ public class UsersService {
         if(!result){
             throw new RuntimeException("密碼錯誤");
         }
+        Map<String, Object> map = new HashMap<>();
+        map.put("token", jwtUtil.generateToken(user));
+        map.put("userId", user.getId());
 
-        return jwtUtil.generateToken(user);
+        return map;
     }
 }

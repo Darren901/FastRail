@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,25 @@ public class TrainsService {
     private TrainsRepository trainsRepo;
     @Autowired
     private StationsRepository stationsRepo;
+
+    @Transactional
+    public List<Trains> findTrains(TrainsDTO trainsDTO){
+
+        return trainsRepo.findTrains(
+                trainsDTO.getDepartureStationId(),
+                trainsDTO.getArrivalStationId(),
+                trainsDTO.getTrainDate(),
+                trainsDTO.getDepartureTime());
+    }
+
+    public List<Trains> findByTrainNumberAndRoute(TrainsDTO trainsDTO){
+        return trainsRepo.findByTrainNumberAndRoute(
+                trainsDTO.getTrainNumber(),
+                trainsDTO.getDepartureStationId(),
+                trainsDTO.getArrivalStationId(),
+                trainsDTO.getTrainDate()
+        );
+    }
 
     public Page<Trains> findTrainsByPage(Integer pageNumber){
         int pageNum = pageNumber != null ? pageNumber - 1 : 0;
