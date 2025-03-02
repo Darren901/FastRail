@@ -19,6 +19,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/api/users/register",
                         "/api/users/login",
+                        "/api/users/send-otp",
+                        "/api/google",
+                        "/api/google/**",
+                        "/favicon.ico",
                         "/error"
                 );
     }

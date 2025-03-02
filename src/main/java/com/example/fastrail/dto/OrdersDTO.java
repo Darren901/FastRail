@@ -6,11 +6,20 @@ import java.time.LocalTime;
 public class OrdersDTO {
 
     private Integer userId;
-    private Integer trainId;
+    private String trainNumber;
     private Integer departureStationId;
     private Integer arrivalStationId;
     private LocalTime departureTime;
     private LocalTime arrivalTime;
+    private String twId;
+
+    public String getTwId() {
+        return twId;
+    }
+
+    public void setTwId(String twId) {
+        this.twId = twId;
+    }
 
     public Integer getUserId() {
         return userId;
@@ -20,12 +29,12 @@ public class OrdersDTO {
         this.userId = userId;
     }
 
-    public Integer getTrainId() {
-        return trainId;
+    public String getTrainNumber() {
+        return trainNumber;
     }
 
-    public void setTrainId(Integer trainId) {
-        this.trainId = trainId;
+    public void setTrainNumber(String trainNumber) {
+        this.trainNumber = trainNumber;
     }
 
     public Integer getDepartureStationId() {

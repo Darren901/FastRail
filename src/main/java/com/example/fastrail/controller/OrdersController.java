@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/orders")
@@ -36,8 +37,8 @@ public class OrdersController {
     }
 
     @PutMapping("/payOrder/{orderNumber}")
-    public ResponseEntity<?> payOrder(@PathVariable String orderNumber){
-        Orders order = ordersService.payOrder(orderNumber);
+    public ResponseEntity<?> payOrder(@PathVariable String orderNumber, @RequestBody Map<String, String> payLoad){
+        Orders order = ordersService.payOrder(orderNumber, payLoad.get("twId"));
         return ResponseEntity.status(HttpStatus.OK).body(order);
     }
 }

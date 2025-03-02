@@ -57,4 +57,19 @@ public class UsersService {
 
         return map;
     }
+
+    public Map<String, Object> loginWithOauth(String email){
+        Users user = usersRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("找不到此帳號"));
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("token", jwtUtil.generateToken(user));
+        map.put("userId", user.getId());
+
+        return map;
+    }
+
+    public boolean existsByEmail(String email){
+        return usersRepo.existsByEmail(email);
+    }
 }

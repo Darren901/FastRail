@@ -6,6 +6,7 @@ import com.example.fastrail.model.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,5 +20,7 @@ public interface OrdersRepository extends JpaRepository<Orders, Integer> {
     List<Orders> findByTrain(Trains train);
 
     boolean existsByOrderNumber(String orderNumber);
+
+    List<Orders> findByOrderStatusAndPaymentDeadlineBefore(Orders.OrderStatus orderStatus, LocalDateTime deadline);
 
 }

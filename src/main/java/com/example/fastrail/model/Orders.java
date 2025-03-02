@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
@@ -58,6 +59,9 @@ public class Orders {
     @Column(name = "payment_deadline")
     private LocalDateTime paymentDeadline;
 
+    @Column(name = "trip_type")
+    private String tripType;
+
     @Column(name = "created_at")
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -73,6 +77,11 @@ public class Orders {
         return user.getName();
     }
 
+    @JsonProperty("trainDate")
+    public LocalDate fetchTrainDate(){
+        return train.getTrainDate();
+    }
+
     @JsonProperty("trainNumber")
     public String fetchTrainNumber(){
         return train.getTrainNumber();
@@ -86,6 +95,14 @@ public class Orders {
     @JsonProperty("arrivalStationName")
     public String fetchArrivalStationName() {
         return arrivalStation.getStationName();
+    }
+
+    public String getTripType() {
+        return tripType;
+    }
+
+    public void setTripType(String tripType) {
+        this.tripType = tripType;
     }
 
     public Integer getId() {

@@ -12,6 +12,7 @@ public class UsersDTO {
     private String name;
     private String phone;
     private String twId;
+    private String otp;
 
     public String getEmail() {
         return email;
@@ -51,5 +52,13 @@ public class UsersDTO {
 
     public void setTwId(String twId) {
         this.twId = twId;
+    }
+
+    public String getOtp() {
+        return otp;
+    }
+
+    public void setOtp(String otp) {
+        this.otp = otp;
     }
 }
