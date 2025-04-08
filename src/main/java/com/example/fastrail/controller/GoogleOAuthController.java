@@ -7,31 +7,37 @@ import com.example.fastrail.service.UsersService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.HashMap;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/google")
+@RequiredArgsConstructor
 public class GoogleOAuthController {
 
-    @Autowired
-    private GoogleConfig googleConfig;
+    @Value("${frontEndHost}")
+    private String FRONT_HOST;
 
-    @Autowired
-    private UsersService usersService;
-
-    @Autowired
-    private StringRedisTemplate redisTemplate;
+    private final GoogleConfig googleConfig;
+    private final UsersService usersService;
+    private final StringRedisTemplate redisTemplate;
 
     @GetMapping("/login")
     public ResponseEntity<?> googleLogin(){
@@ -78,7 +84,7 @@ public class GoogleOAuthController {
                 .retrieve()
                 .body(String.class);
 
-        System.out.println(result);
+        log.info("-------> result : {}", result);
 
         JsonNode jsonNode2 = new ObjectMapper().readTree(result);
         String userEmail = jsonNode2.get("email").asText();
@@ -86,21 +92,26 @@ public class GoogleOAuthController {
 
         if(usersService.existsByEmail(userEmail)){
             Map<String, Object> loginResult = usersService.loginWithOauth(userEmail);
-            return ResponseEntity.ok().body(loginResult);
+            String redirectUrl = FRONT_HOST + "auth-callback?token=" + loginResult.get("token") +
+                    "&userId=" + loginResult.get("userId");
 
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(redirectUrl))
+                    .build();
         }else{
             String tempToken = UUID.randomUUID().toString();
 
             redisTemplate.opsForHash().putAll("google_oauth:" + tempToken, Map.of("email", userEmail, "name", userName));
             redisTemplate.expire("google_oauth:" + tempToken, 10, TimeUnit.MINUTES);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", "NEED_MORE_INFO");
-            response.put("tempToken", tempToken);
-            response.put("email", userEmail);
-            response.put("name", userName);
+            String redirectUrl = FRONT_HOST + "complete-profile?tempToken=" + tempToken +
+                    "&email=" + URLEncoder.encode(userEmail, StandardCharsets.UTF_8) +
+                    "&name=" + URLEncoder.encode(userName, StandardCharsets.UTF_8) +
+                    "&status=NEED_MORE_INFO";
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(redirectUrl))
+                    .build();
         }
 
     }

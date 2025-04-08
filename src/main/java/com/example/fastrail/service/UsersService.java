@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class UsersService {
@@ -31,11 +32,13 @@ public class UsersService {
             throw new RuntimeException("此身分證已經註冊過");
         }
 
-        String encodePwd = passwordEncoder.encode(usersDTO.getPassword());
         Users user = new Users();
         user.setEmail(usersDTO.getEmail());
         user.setName(usersDTO.getName());
-        user.setPassword(encodePwd);
+        if(usersDTO.getPassword() != null && !usersDTO.getPassword().isEmpty()){
+            String encodePwd = passwordEncoder.encode(usersDTO.getPassword());
+            user.setPassword(encodePwd);
+        }
         user.setPhone(usersDTO.getPhone());
         user.setTwId(usersDTO.getTwId());
 

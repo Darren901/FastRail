@@ -26,7 +26,8 @@ public interface TrainsRepository extends JpaRepository<Trains, Integer> {
             "AND ts1.station.id = :depStationId " +
             "AND ts2.station.id = :arrStationId " +
             "AND ts1.stopSequence < ts2.stopSequence " +
-            "AND t.trainDate = :date")
+            "AND t.trainDate = :date " +
+            "ORDER BY t.departureTime ASC")
     List<Trains> findByTrainNumberAndRoute(
             @Param("trainNumber") String trainNumber,
             @Param("depStationId") Integer depStationId,
@@ -42,7 +43,8 @@ public interface TrainsRepository extends JpaRepository<Trains, Integer> {
             "AND ts1.stop_sequence < ts2.stop_sequence " +
             "AND t.train_date = :date " +
             "AND CAST(CONVERT(VARCHAR, ts1.departure_time, 108) AS time) >= " +
-            "CAST(CONVERT(VARCHAR, :time, 108) AS time)",
+            "CAST(CONVERT(VARCHAR, :time, 108) AS time) " +
+            "ORDER BY t.departure_time ASC",
             nativeQuery = true)
     List<Trains> findTrains(
             @Param("depStationId") Integer depStationId,

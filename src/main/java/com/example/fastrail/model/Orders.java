@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
 @Entity
 @Table(name = "orders")
@@ -85,6 +86,11 @@ public class Orders {
     @JsonProperty("trainNumber")
     public String fetchTrainNumber(){
         return train.getTrainNumber();
+    }
+
+    @JsonProperty("trainStops")
+    public List<TrainStops> fetchTrainStops(){
+        return train.getTrainStops();
     }
 
     @JsonProperty("departureStationName")
