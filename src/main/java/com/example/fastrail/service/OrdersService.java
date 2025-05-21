@@ -1,35 +1,43 @@
 package com.example.fastrail.service;
 
+import com.example.fastrail.common.APBusinessException;
+import com.example.fastrail.common.Constant;
+import com.example.fastrail.config.RabbitMQConfig;
+import com.example.fastrail.dto.AuditPayload;
 import com.example.fastrail.dto.OrdersDTO;
 import com.example.fastrail.model.*;
 import com.example.fastrail.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class OrdersService {
 
-    @Autowired
-    private OrdersRepository ordersRepo;
-    @Autowired
-    private UsersRepository usersRepo;
-    @Autowired
-    private TrainsRepository trainsRepo;
-    @Autowired
-    private TrainStopsRepository trainStopsRepo;
-    @Autowired
-    private StationsRepository stationsRepo;
+    private final OrdersRepository ordersRepo;
+    private final UsersRepository usersRepo;
+    private final TrainsRepository trainsRepo;
+    private final TrainStopsRepository trainStopsRepo;
+    private final StationsRepository stationsRepo;
+    private final RabbitTemplate rabbitTemplate;
+    private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
 
     public Orders findByOrderNumber(String orderNumber){
         return ordersRepo.findByOrderNumber(orderNumber)
@@ -46,63 +54,67 @@ public class OrdersService {
     }
 
     @Transactional
-    public Orders createOrder(OrdersDTO ordersDTO){
+    @RabbitListener(queues = RabbitMQConfig.ORDER_QUEUE_NAME)
+    public void createOrder(OrdersDTO ordersDTO) throws JsonProcessingException {
+        try{
         Users user = usersRepo.findById(ordersDTO.getUserId())
-                .orElseThrow(() -> new RuntimeException("找不到該會員資訊"));
+                .orElseThrow(() -> new APBusinessException(Constant.RCODE.NO_USER_INFO));
 
         if(!user.getTwId().equals(ordersDTO.getTwId()) ){
-            throw  new RuntimeException("取票識別碼填寫錯誤");
+            throw new APBusinessException(Constant.RCODE.ERROR_IDENTIFIED_CODE);
         }
 
-        Trains train = trainsRepo.findByTrainNumber(ordersDTO.getTrainNumber())
-                .orElseThrow(() -> new RuntimeException("找不到車次資訊"));
+
+        Trains train = trainsRepo.findByTrainNumberForUpdate(ordersDTO.getTrainNumber())
+                .orElseThrow(() -> new APBusinessException(Constant.RCODE.NO_TRAINS_INFO));
 
         if (train.getAvailableSeats() <= 0) {
-            throw new RuntimeException("該車次已無座位");
+            throw new APBusinessException(Constant.RCODE.NO_AVAILABLE_SEAT);
         }
 
         Stations depStation = stationsRepo.findById(ordersDTO.getDepartureStationId())
-                .orElseThrow(() -> new RuntimeException("找不到起始站資訊"));
+                .orElseThrow(() -> new APBusinessException(Constant.RCODE.NO_STATIONS_INFO));
 
         Stations arrStation = stationsRepo.findById(ordersDTO.getArrivalStationId())
-                .orElseThrow(() -> new RuntimeException("找不到抵達站資訊"));
+                .orElseThrow(() -> new APBusinessException(Constant.RCODE.NO_STATIONS_INFO));
 
         TrainStops depStopStation = trainStopsRepo.findByTrainAndStation(train, depStation)
-                .orElseThrow(() -> new RuntimeException("此車次未停靠該起始站"));
+                .orElseThrow(() -> new APBusinessException(Constant.RCODE.NO_STATIONS_INFO));
         TrainStops arrStopStation = trainStopsRepo.findByTrainAndStation(train, arrStation)
-                .orElseThrow(() -> new RuntimeException("此車次未停靠該終點站"));
+                .orElseThrow(() -> new APBusinessException(Constant.RCODE.NO_STATIONS_INFO));
 
         if (depStopStation.getStopSequence() >= arrStopStation.getStopSequence()) {
-            throw new RuntimeException("不符合行車方向");
+            throw new APBusinessException(Constant.RCODE.NO_STATIONS_INFO);
         }
 
-        Orders orders = new Orders();
-        orders.setUser(user);
-        orders.setTrain(train);
-        orders.setDepartureStation(depStation);
-        orders.setArrivalStation(arrStation);
-        orders.setDepartureTime(ordersDTO.getDepartureTime());
-        orders.setArrivalTime(ordersDTO.getArrivalTime());
-        orders.setSeatNumber(generateSeatNumber(train, depStation, arrStation));
-        orders.setTicketPrice(calculateTicketPrice(
+        Orders orders = createOrderEntity(user,
+                train,
                 depStation,
-                arrStation
-        ));
-        orders.setOrderNumber(generateOrderNumber());
-        orders.setOrderStatus(Orders.OrderStatus.PENDING);
-        orders.setPaymentDeadline(LocalDateTime.now().plusMinutes(60));
-        if(depStation.getId() > arrStation.getId()){
-            orders.setTripType("去程");
-        }else{
-            orders.setTripType("回程");
-        }
-
+                arrStation,
+                ordersDTO);
 
         train.setAvailableSeats(train.getAvailableSeats() - 1);
         trainsRepo.save(train);
 
-        return ordersRepo.save(orders);
-
+        ordersRepo.save(orders);
+        updateOrderResultInRedis(ordersDTO.getClientOrderId(),
+                "SUCCESS",
+                orders.getOrderNumber(),
+                "");
+        log.info("📬 已成功創建訂單: {}", orders.getOrderNumber());
+        sendAuditLog("CREATE_ORDER", ordersDTO.getTwId(), "SUCCESS");
+        }catch (APBusinessException ae){
+            handleOrderProcessingFailure(ordersDTO.getClientOrderId(),
+                    ordersDTO.getTwId(),
+                    ae.getFullMessage(),
+                    ae);
+        }
+        catch (Exception e) {
+            handleOrderProcessingFailure(ordersDTO.getClientOrderId(),
+                    ordersDTO.getTwId(),
+                    e.getMessage(),
+                    e);
+        }
     }
 
     @Transactional
@@ -146,6 +158,60 @@ public class OrdersService {
             ordersRepo.saveAll(expiredOrders);
             System.out.println("已自動取消 " + expiredOrders.size() + " 筆過期訂單");
         }
+    }
+
+    private Orders createOrderEntity(Users user, Trains train, Stations depStation, Stations arrStation, OrdersDTO ordersDTO) {
+        Orders orders = new Orders();
+        orders.setUser(user);
+        orders.setTrain(train);
+        orders.setDepartureStation(depStation);
+        orders.setArrivalStation(arrStation);
+        orders.setDepartureTime(ordersDTO.getDepartureTime());
+        orders.setArrivalTime(ordersDTO.getArrivalTime());
+        orders.setSeatNumber(generateSeatNumber(train, depStation, arrStation));
+        orders.setTicketPrice(calculateTicketPrice(depStation, arrStation));
+        orders.setOrderNumber(generateOrderNumber());
+        orders.setOrderStatus(Orders.OrderStatus.PENDING);
+        orders.setPaymentDeadline(LocalDateTime.now().plusMinutes(60));
+
+        // 設置行程類型
+        orders.setTripType(depStation.getId() > arrStation.getId() ? "去程" : "回程");
+
+        return orders;
+    }
+
+    // 更新 Redis 中的訂單結果
+    private void updateOrderResultInRedis(String clientOrderId, String status, String orderNumber, String errorMessage) throws JsonProcessingException {
+        Map<String, Object> resultMap;
+        if ("SUCCESS".equals(status)) {
+            resultMap = Map.of("status", status, "orderNumber", orderNumber);
+        } else {
+            resultMap = Map.of("status", status, "message", errorMessage);
+        }
+
+        redisTemplate.opsForValue().set(
+                "clientOrder:" + clientOrderId,
+                objectMapper.writeValueAsString(resultMap),
+                5,
+                TimeUnit.MINUTES
+        );
+    }
+
+    // 發送審計日誌
+    private void sendAuditLog(String action, String twId, String status) {
+        AuditPayload auditPayload = new AuditPayload(action, twId, status, Instant.now());
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE_NAME,
+                RabbitMQConfig.AUDIT_ROUTING_KEY,
+                auditPayload
+        );
+    }
+
+    // 處理訂單處理失敗
+    private void handleOrderProcessingFailure(String clientOrderId, String twId, String errorMessage, Exception e) throws JsonProcessingException {
+        updateOrderResultInRedis(clientOrderId, "FAILED", null, errorMessage);
+        sendAuditLog("CREATE_ORDER", twId, "FAILED");
+        log.info("❌ 創建訂單失敗 {}", errorMessage, e);
     }
 
     private String generateOrderNumber(){

@@ -26,7 +26,7 @@ public class TrainStopsService {
     private TrainStopsRepository trainStopsRepo;
 
     public List<TrainStops> addStopsByTrains(String trainNumber, List<TrainStopsDTO> dtoList){
-        Trains train = trainsRepo.findByTrainNumber(trainNumber)
+        Trains train = trainsRepo.findByTrainNumberForUpdate(trainNumber)
                 .orElseThrow(() -> new RuntimeException("找不到車次"));
 
         List<TrainStops> list = new ArrayList<>();
@@ -47,7 +47,7 @@ public class TrainStopsService {
     }
 
     public List<TrainStops> getStopsByTrainNumber(String trainNumber){
-        Trains train = trainsRepo.findByTrainNumber(trainNumber)
+        Trains train = trainsRepo.findByTrainNumberForUpdate(trainNumber)
                 .orElseThrow(() -> new RuntimeException("找不到該車次"));
 
         return trainStopsRepo.findByTrainOrderByStopSequence(train);

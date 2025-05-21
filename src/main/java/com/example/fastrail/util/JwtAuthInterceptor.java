@@ -14,24 +14,24 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler){
-        if("OPTIONS".equals(request.getMethod())){
-            return true;
-        }
-
-        String token = request.getHeader("Authorization");
-
-        if (token == null || !token.startsWith("Bearer ")) {
-            throw new RuntimeException("無效的token");
-        }
-
-        token = token.substring(7);
-
-        if(!jwtUtil.validateToken(token)){
-            throw new RuntimeException("token已過期或無效");
-        }
-
-        request.setAttribute("userEmail", jwtUtil.getEmailFromToken(token));
-
+//        if("OPTIONS".equals(request.getMethod())){
+//            return true;
+//        }
+//
+//        String token = request.getHeader("Authorization");
+//
+//        if (token == null || !token.startsWith("Bearer ")) {
+//            throw new RuntimeException("無效的token");
+//        }
+//
+//        token = token.substring(7);
+//
+//        if(!jwtUtil.validateToken(token)){
+//            throw new RuntimeException("token已過期或無效");
+//        }
+//
+//        request.setAttribute("userEmail", jwtUtil.getEmailFromToken(token));
+//
         return true;
     }
 }

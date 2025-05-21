@@ -2,7 +2,9 @@ package com.example.fastrail.repository;
 
 import com.example.fastrail.model.Stations;
 import com.example.fastrail.model.Trains;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,7 +19,10 @@ public interface TrainsRepository extends JpaRepository<Trains, Integer> {
 
     boolean existsByTrainNumber(String trainNumber);
 
-    Optional<Trains> findByTrainNumber(String trainNumber);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT t FROM Trains t WHERE t.trainNumber = :trainNumber")
+    Optional<Trains> findByTrainNumberForUpdate(@Param("trainNumber") String trainNumber);
+
 
     @Query("SELECT t FROM Trains t " +
             "JOIN t.trainStops ts1 " +

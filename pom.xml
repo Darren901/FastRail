@@ -110,6 +110,12 @@
 			<version>1.0.0-M5</version>
 		</dependency>
 
+		<!-- message queue -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-amqp</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<repositories>

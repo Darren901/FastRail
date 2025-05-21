@@ -53,7 +53,7 @@ public class UsersController {
         }
 
         String otp = otpService.generationOTP(email);
-        otpService.sendOTPEmail(email, otp);
+        otpService.sendOTPAsync(email, otp);
 
         return ResponseEntity.ok(Map.of("message", "驗證碼已發送到您的郵箱"));
     }

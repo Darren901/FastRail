@@ -4,25 +4,21 @@ import com.example.fastrail.dto.UsersDTO;
 import com.example.fastrail.model.Users;
 import com.example.fastrail.repository.UsersRepository;
 import com.example.fastrail.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class UsersService {
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private UsersRepository usersRepo;
-
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
+    private final UsersRepository usersRepo;
+    private final JwtUtil jwtUtil;
 
     public Users registerUser(UsersDTO usersDTO){
         if(usersRepo.existsByEmail(usersDTO.getEmail())){

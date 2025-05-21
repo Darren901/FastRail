@@ -52,7 +52,7 @@ public class TrainsService {
     }
 
     public Trains findByTrainNumber(String trainNumber){
-        return trainsRepo.findByTrainNumber(trainNumber)
+        return trainsRepo.findByTrainNumberForUpdate(trainNumber)
                 .orElseThrow(() -> new RuntimeException("找不到車次資料"));
     }
 
@@ -96,7 +96,7 @@ public class TrainsService {
     }
 
     public void deleteTrains(String trainNumber){
-        Trains trains = trainsRepo.findByTrainNumber(trainNumber)
+        Trains trains = trainsRepo.findByTrainNumberForUpdate(trainNumber)
                 .orElseThrow(() -> new RuntimeException("找不到車次編號"));
         trainsRepo.delete(trains);
     }
