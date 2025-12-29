@@ -4,9 +4,13 @@ import com.example.fastrail.dto.StationsDTO;
 import com.example.fastrail.model.Stations;
 import com.example.fastrail.repository.StationsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class StationsService {
@@ -16,6 +20,13 @@ public class StationsService {
 
     public List<Stations> findAllStations(){
         return stationsRepo.findAll();
+    }
+
+    public Page<Stations> findByPage(Integer pageNumber){
+        int pageNum = Math.max(Optional.ofNullable(pageNumber).orElse(1) - 1, 0);
+        PageRequest pg = PageRequest.of(pageNum, 10);
+
+        return stationsRepo.findAll(pg);
     }
 
     public Stations createStation(StationsDTO stationsDTO){

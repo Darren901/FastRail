@@ -1,5 +1,6 @@
 package com.example.fastrail.util;
 
+import com.example.fastrail.model.AdminUsers;
 import com.example.fastrail.model.Users;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

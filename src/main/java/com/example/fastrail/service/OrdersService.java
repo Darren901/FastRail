@@ -11,8 +11,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.weaver.ast.Or;
+import org.hibernate.query.Order;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -38,6 +43,22 @@ public class OrdersService {
     private final RabbitTemplate rabbitTemplate;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
+
+    public Orders findById(Integer id){
+        Optional<Orders> op = ordersRepo.findById(id);
+        return op.orElse(null);
+    }
+
+    public Page<Orders> findByPage(Integer pageNumber){
+        int pageNum=  pageNumber != null ? pageNumber - 1 : 0;
+        PageRequest pg = PageRequest
+                .of(pageNum, 10, Sort.by("createdAt").descending());
+        return ordersRepo.findAll(pg);
+    }
+
+    public void deleteById(Integer id){
+        ordersRepo.deleteById(id);
+    }
 
     public Orders findByOrderNumber(String orderNumber){
         return ordersRepo.findByOrderNumber(orderNumber)
